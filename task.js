@@ -1,12 +1,40 @@
 function loadFile() {
-    let input, file, fr;
+  let input, file, fr, urlinput;
+  input = document.getElementById('fileinput');
+  urlinput = document.getElementById('urlinput').value; //I generated data i need on this link https://api.myjson.com/bins/189ral
 
+  //first check if both inputs are empty
+  if(urlinput == '' && !input.files[0]){
+    alert("Please enter URL or choose JSON file from local drive!");
+  } 
+  //now checking if there is no file selected 
+  else if(!input.files[0]) {
+    //try to check if URL is valid adress
+    const myRe = /((https?\:\/\/)|(www\.))(\S+)(\w{2,4})(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+    let mA = urlinput.match(myRe);
+    if(mA != null){
+      let a = new XMLHttpRequest();
+      a.open("GET", `${urlinput}`, true);
+      a.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+              receivedText(this.responseText);
+          }
+          else {
+            //empty string
+          }       
+      }
+      a.send();            
+    }
+    else {
+      alert("Not valid URL.");
+    }
+  } 
+  //Else URL input is empty, and JSON is loaded localy
+  else {
     if (typeof window.FileReader !== 'function') {
       alert("The file API isn't supported on this browser yet.");
       return;
     }
-
-    input = document.getElementById('fileinput');
     if (!input) {
       alert("Could not find the file input element.");
     }
@@ -19,14 +47,17 @@ function loadFile() {
     else {
       file = input.files[0];
       fr = new FileReader();
-      fr.onload = receivedText;
       fr.readAsText(file);
+      fr.onload = function(e) {
+        const lines = e.target.result;
+        receivedText(lines);  
+      };
     }
+  }  
 }
 
 //Make <select> and populate the <options> with names of Users
-function receivedText(e) {
-  const lines = e.target.result;
+function receivedText(lines) {
   const newArr = JSON.parse(lines);   
   let div = document.getElementById('users');
   
@@ -123,4 +154,3 @@ function frOfFriends(mainObj,friendArr, myArray) {
   let arrWithoutDuplicates = Array.from(new Set(frOfFriends));
   return arrWithoutDuplicates;
 }
-
